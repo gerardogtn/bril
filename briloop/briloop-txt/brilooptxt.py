@@ -22,11 +22,11 @@ start: (struct | func)*
 struct: STRUCT IDENT "=" "{" mbr* "}"
 mbr: IDENT ":" type ";"
 
-func: FUNC ["(" arg_list? ")"] [tyann] "{" func_body* "}"
-func_body: instr | while_
+func: FUNC ["(" arg_list? ")"] [tyann] "{" stmt* "}"
+stmt: instr | while_
 arg_list: | arg ("," arg)*
 arg: IDENT ":" type
-while_: WHILE IDENT "{" instr* "}"
+while_: WHILE IDENT "{" stmt* "}"
 ?instr: const | vop | eop | label
 
 const.4: IDENT [tyann] "=" "const" lit ";"
@@ -120,7 +120,7 @@ class JSONTransformer(lark.Transformer):
             func['pos'] = _pos(name)
         return func
 
-    def func_body(self, items):
+    def stmt(self, items):
         return items.pop(0)
 
     def while_(self, items):
