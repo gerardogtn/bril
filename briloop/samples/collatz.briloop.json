@@ -1,0 +1,219 @@
+{
+  "functions": [
+    {
+      "args": [
+        {
+          "name": "n",
+          "type": "int"
+        }
+      ],
+      "instrs": [
+        {
+          "args": [
+            "n"
+          ],
+          "dest": "res",
+          "funcs": [
+            "f"
+          ],
+          "op": "call",
+          "type": "int"
+        },
+        {
+          "args": [
+            "res"
+          ],
+          "op": "print"
+        }
+      ],
+      "name": "main"
+    },
+    {
+      "args": [
+        {
+          "name": "a",
+          "type": "int"
+        },
+        {
+          "name": "b",
+          "type": "int"
+        }
+      ],
+      "instrs": [
+        {
+          "args": [
+            "a",
+            "b"
+          ],
+          "dest": "res",
+          "op": "div",
+          "type": "int"
+        },
+        {
+          "args": [
+            "res",
+            "b"
+          ],
+          "dest": "prod",
+          "op": "mul",
+          "type": "int"
+        },
+        {
+          "args": [
+            "a",
+            "b"
+          ],
+          "dest": "temp",
+          "op": "sub",
+          "type": "int"
+        },
+        {
+          "args": [
+            "temp",
+            "b"
+          ],
+          "dest": "temp",
+          "op": "add",
+          "type": "int"
+        },
+        {
+          "args": [
+            "temp"
+          ],
+          "op": "ret"
+        }
+      ],
+      "name": "mod",
+      "type": "int"
+    },
+    {
+      "args": [
+        {
+          "name": "n",
+          "type": "int"
+        }
+      ],
+      "instrs": [
+        {
+          "dest": "zero",
+          "op": "const",
+          "type": "int",
+          "value": 0
+        },
+        {
+          "dest": "one",
+          "op": "const",
+          "type": "int",
+          "value": 1
+        },
+        {
+          "dest": "two",
+          "op": "const",
+          "type": "int",
+          "value": 2
+        },
+        {
+          "dest": "three",
+          "op": "const",
+          "type": "int",
+          "value": 3
+        },
+        {
+          "args": [
+            "n",
+            "two"
+          ],
+          "dest": "r",
+          "funcs": [
+            "mod"
+          ],
+          "op": "call",
+          "type": "int"
+        },
+        {
+          "args": [
+            "r",
+            "zero"
+          ],
+          "dest": "even",
+          "op": "cmp",
+          "type": "bool"
+        },
+        {
+          "args": [
+            "even"
+          ],
+          "children": [
+            [
+              {
+                "args": [
+                  "n",
+                  "two"
+                ],
+                "dest": "temp",
+                "op": "div",
+                "type": "int"
+              },
+              {
+                "args": [
+                  "temp"
+                ],
+                "dest": "res",
+                "funcs": [
+                  "f"
+                ],
+                "op": "call",
+                "type": "int"
+              },
+              {
+                "args": [
+                  "res"
+                ],
+                "op": "ret"
+              }
+            ],
+            [
+              {
+                "args": [
+                  "n",
+                  "three"
+                ],
+                "dest": "temp",
+                "op": "mul",
+                "type": "int"
+              },
+              {
+                "args": [
+                  "temp",
+                  "one"
+                ],
+                "dest": "temp",
+                "op": "add",
+                "type": "int"
+              },
+              {
+                "args": [
+                  "temp"
+                ],
+                "dest": "res",
+                "funcs": [
+                  "f"
+                ],
+                "op": "call",
+                "type": "int"
+              },
+              {
+                "args": [
+                  "res"
+                ],
+                "op": "ret"
+              }
+            ]
+          ],
+          "op": "if"
+        }
+      ],
+      "name": "f"
+    }
+  ]
+}

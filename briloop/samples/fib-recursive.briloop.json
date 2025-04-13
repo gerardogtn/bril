@@ -1,0 +1,140 @@
+{
+  "functions": [
+    {
+      "args": [
+        {
+          "name": "n",
+          "type": "int"
+        }
+      ],
+      "instrs": [
+        {
+          "dest": "zero",
+          "op": "const",
+          "type": "int",
+          "value": 0
+        },
+        {
+          "dest": "one",
+          "op": "const",
+          "type": "int",
+          "value": 1
+        },
+        {
+          "args": [
+            "n",
+            "zero",
+            "one"
+          ],
+          "dest": "r",
+          "funcs": [
+            "fib_recursive"
+          ],
+          "op": "call",
+          "type": "int"
+        },
+        {
+          "args": [
+            "r"
+          ],
+          "op": "print"
+        }
+      ],
+      "name": "main"
+    },
+    {
+      "args": [
+        {
+          "name": "n",
+          "type": "int"
+        },
+        {
+          "name": "a",
+          "type": "int"
+        },
+        {
+          "name": "b",
+          "type": "int"
+        }
+      ],
+      "instrs": [
+        {
+          "dest": "zero",
+          "op": "const",
+          "type": "int",
+          "value": 0
+        },
+        {
+          "dest": "one",
+          "op": "const",
+          "type": "int",
+          "value": 1
+        },
+        {
+          "args": [
+            "n",
+            "zero"
+          ],
+          "dest": "cond",
+          "op": "ge",
+          "type": "bool"
+        },
+        {
+          "args": [
+            "cond"
+          ],
+          "children": [
+            [
+              {
+                "args": [
+                  "a",
+                  "b"
+                ],
+                "dest": "temp",
+                "op": "add",
+                "type": "int"
+              },
+              {
+                "args": [
+                  "n",
+                  "one"
+                ],
+                "dest": "n",
+                "op": "sub",
+                "type": "int"
+              },
+              {
+                "args": [
+                  "n",
+                  "b",
+                  "temp"
+                ],
+                "dest": "res",
+                "funcs": [
+                  "fib_recursive"
+                ],
+                "op": "call",
+                "type": "int"
+              },
+              {
+                "args": [
+                  "res"
+                ],
+                "op": "ret"
+              }
+            ],
+            null
+          ],
+          "op": "if"
+        },
+        {
+          "args": [
+            "a"
+          ],
+          "op": "ret"
+        }
+      ],
+      "name": "fib_recursive"
+    }
+  ]
+}
