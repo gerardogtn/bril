@@ -22,11 +22,11 @@ start: (struct | func)*
 struct: STRUCT IDENT "=" "{" mbr* "}"
 mbr: IDENT ":" type ";"
 
-if: IF IDENT THEN "{" instr* "}" ELSE "{" instr* "}"
-while: WHILE IDENT "{" instr* "}"
-func: FUNC ["(" arg_list? ")"] [tyann] "{" instr* "}"
+func: FUNC ["(" arg_list? ")"] [tyann] "{" func_body* "}"
+func_body: instr | whil
 arg_list: | arg ("," arg)*
 arg: IDENT ":" type
+whil: WHILE IDENT "{" instr* "}"
 ?instr: const | vop | eop | label
 
 const.4: IDENT [tyann] "=" "const" lit ";"
@@ -106,6 +106,8 @@ class JSONTransformer(lark.Transformer):
     def func(self, items):
         name, args, typ = items[:3]
         instrs = items[3:]
+        for instr in instrs:
+            print(instr)
         func = {
             'name': str(name)[1:],  # Strip `@`.
             'instrs': instrs,
@@ -117,6 +119,19 @@ class JSONTransformer(lark.Transformer):
         if self.include_pos:
             func['pos'] = _pos(name)
         return func
+
+    def func_body(self, items):
+        return items.pop(0)
+
+    def whil(self, items):
+        op = str(items[0])
+        name = str(items[1])
+        children = items[2:]
+        return {
+            'op': op,
+            'args': [name],
+            'children': children,
+        }
 
     def arg(self, items):
         name = items.pop(0)
@@ -340,9 +355,12 @@ def print_prog(prog):
 
 # Command-line entry points.
 
-def bril2json():
+def briloop2json():
     print(parse_bril(sys.stdin.read(), '-p' in sys.argv[1:]))
 
 
-def bril2txt():
+def briloop2txt():
     print_prog(json.load(sys.stdin))
+
+if __name__ == "__main__":
+    briloop2json()
