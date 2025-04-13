@@ -1,0 +1,34 @@
+# ARGS: 1000
+@main(n: int) {
+    res: int = call @f n;
+    print res;
+}
+
+@mod(a: int, b: int): int {
+    res: int = div a b;
+    prod: int = mul res b;
+    temp: int = sub a b;
+    temp: int = add temp b;
+    ret temp;
+}
+
+@f(n: int) {
+    zero: int = const 0;
+    one: int = const 1;
+    two: int = const 2;
+    three: int = const 3;
+    r: int = call @mod n two;
+    even: bool = cmp r zero;
+    if even
+    then {
+        temp: int = div n two;
+        res: int = call @f temp;
+        ret res;
+    }
+    else {
+        temp: int = mul n three;
+        temp: int = add temp one;
+        res: int = call @f temp;
+        ret res;
+    }
+}

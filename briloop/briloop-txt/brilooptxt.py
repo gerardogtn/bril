@@ -23,10 +23,13 @@ struct: STRUCT IDENT "=" "{" mbr* "}"
 mbr: IDENT ":" type ";"
 
 func: FUNC ["(" arg_list? ")"] [tyann] "{" stmt* "}"
-stmt: instr | while_
+stmt: instr | while_ | if_
 arg_list: | arg ("," arg)*
 arg: IDENT ":" type
 while_: WHILE IDENT "{" stmt* "}"
+if_: IF IDENT then_ [else_]
+then_: THEN "{" stmt* "}"
+else_: ELSE "{" stmt* "}"
 ?instr: const | vop | eop | label
 
 const.4: IDENT [tyann] "=" "const" lit ";"
@@ -86,9 +89,10 @@ def _pos(token):
 
 
 class JSONTransformer(lark.Transformer):
-    def __init__(self, include_pos=False):
+    def __init__(self, include_pos=False, goof=False):
         super().__init__()
         self.include_pos = include_pos
+        self.goof = goof
 
     def start(self, items):
         structs = [i for i in items if 'mbrs' in i]
@@ -106,8 +110,6 @@ class JSONTransformer(lark.Transformer):
     def func(self, items):
         name, args, typ = items[:3]
         instrs = items[3:]
-        for instr in instrs:
-            print(instr)
         func = {
             'name': str(name)[1:],  # Strip `@`.
             'instrs': instrs,
@@ -131,6 +133,37 @@ class JSONTransformer(lark.Transformer):
             'op': op,
             'args': [name],
             'children': children,
+        }
+
+    def if_(self, items):
+        op = str(items[0])
+        arg = str(items[1])
+        foo = items[2]
+        oof = items[3]
+        if self.goof :
+            return {
+                'op': op,
+                'args': [arg],
+                'foo': foo,
+                'oof': oof,
+            }
+
+        return {
+            'op': op,
+            'args': [arg],
+            'children': [foo, oof],
+        }
+
+    def then_(self, items):
+        return items[1:]
+        return {
+            'stmts': items[1:]
+        }
+
+    def else_(self, items):
+        return items[1:]
+        return {
+            'stmts': items[1:],
         }
 
     def arg(self, items):
@@ -250,14 +283,14 @@ class JSONTransformer(lark.Transformer):
         return value
 
 
-def parse_bril(txt, include_pos=False):
+def parse_bril(txt, include_pos=False, goof=False):
     """Parse a Bril program and return a JSON string.
 
     Optionally include source position information.
     """
     parser = lark.Lark(GRAMMAR, maybe_placeholders=True)
     tree = parser.parse(txt)
-    data = JSONTransformer(include_pos).transform(tree)
+    data = JSONTransformer(include_pos=include_pos, goof=goof).transform(tree)
     return json.dumps(data, indent=2, sort_keys=True)
 
 
@@ -356,7 +389,7 @@ def print_prog(prog):
 # Command-line entry points.
 
 def briloop2json():
-    print(parse_bril(sys.stdin.read(), '-p' in sys.argv[1:]))
+    print(parse_bril(sys.stdin.read(), include_pos='-p' in sys.argv[1:], goof="-goof" in sys.argv[1:]))
 
 
 def briloop2txt():
