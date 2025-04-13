@@ -393,7 +393,7 @@ def briloop2json():
 
 
 def briloop2txt():
-    print_prog(json.load(sys.stdin))
+    print("come back soon!")
 
 if __name__ == "__main__":
     briloop2json()
