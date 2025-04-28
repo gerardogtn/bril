@@ -126,7 +126,6 @@ class JSONTransformer(lark.Transformer):
         return items.pop(0)
 
     def while_(self, items):
-        print("While parsing")
         op = str(items[0])
         name = str(items[1])
         body = items[2:]
