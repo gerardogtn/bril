@@ -126,13 +126,14 @@ class JSONTransformer(lark.Transformer):
         return items.pop(0)
 
     def while_(self, items):
+        print("While parsing")
         op = str(items[0])
         name = str(items[1])
-        children = items[2:]
+        body = items[2:]
         return {
             'op': op,
             'args': [name],
-            'children': children,
+            'children': [body],
         }
 
     def if_(self, items):
