@@ -13,5 +13,5 @@ requires = [
 ]
 
 [tool.flit.scripts]
-briloop2txt = "briltxt:briloop2txt"
-briloop2json = "briltxt:briloop2json"
+briloop2txt = "brilooptxt:briloop2txt"
+briloop2json = "brilooptxt:briloop2json"
