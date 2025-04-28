@@ -17,7 +17,7 @@
     ret rem;
 }
 
-@f(n: int) {
+@f(n: int): int {
     zero: int = const 0;
     one: int = const 1;
     two: int = const 2;
@@ -27,7 +27,7 @@
     if exit then { ret one; }
 
     r: int = call @mod n two;
-    even: bool = cmp r zero;
+    even: bool = eq r zero;
     if even
     then {
         temp: int = div n two;
