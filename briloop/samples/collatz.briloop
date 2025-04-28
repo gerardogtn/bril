@@ -5,11 +5,16 @@
 }
 
 @mod(a: int, b: int): int {
-    res: int = div a b;
-    prod: int = mul res b;
-    temp: int = sub a b;
-    temp: int = add temp b;
-    ret temp;
+    zero: int = const 0;
+    cond: bool = lt a zero;
+    if cond then {
+        n: int = const -1;
+        a: int = mul a n;
+    }
+    quot: int = div a b;
+    prod: int = mul quot b;
+    rem: int = sub a prod;
+    ret rem;
 }
 
 @f(n: int) {
@@ -17,6 +22,10 @@
     one: int = const 1;
     two: int = const 2;
     three: int = const 3;
+
+    exit: bool = eq n one;
+    if exit then { ret one; }
+
     r: int = call @mod n two;
     even: bool = cmp r zero;
     if even
