@@ -314,12 +314,65 @@ def value_to_str(type, value):
     else:
         return str(value).lower()
 
+def formatted_children(instrs, indentLevel):
+    formatted = map(lambda x: instr_to_string(x, indentLevel), instrs)
+    joined = '\n'.join(formatted)
+    return joined
 
-def instr_to_string(instr):
+def while_to_string(instr, indentLevel):
+    indent = '  ' * indentLevel
+    return '{}while ({}) {{\n{}\n{}}}'.format(
+        indent,
+        instr['args'][0],
+        formatted_children(instr['children'][0], indentLevel + 1),
+        indent
+    )
+
+def if_to_string(instr, indentLevel):
+    indent = '  ' * indentLevel
+    if (len(instr['children']) == 1):
+        return '{}if {}\n{}then{{\n {}\n {}}}'.format(
+            indent,
+            instr['args'][0],
+            indent,
+            formatted_children(instr['children'][0], indentLevel + 1),
+            indent,
+        )
+
+    return '{}if {}\n{}then {{\n{}\n{}}}\n{}else {{\n{}\n{}}}'.format(
+        indent,
+        instr['args'][0],
+        indent,
+        formatted_children(instr['children'][0], indentLevel + 1),
+        indent,
+        indent,
+        formatted_children(instr['children'][1], indentLevel + 1),
+        indent,
+        indent,
+        indent
+    )
+
+def block_to_string(instr):
+    indent = '  ' * indentLevel
+    return '{}block {{\n{}\n{}}}'.format(
+        indent,
+        formatted_children(instr['children'][0]),
+        indent
+    )
+
+def instr_to_string(instr, indentLevel = 1):
+    indent = '  ' * indentLevel
+    if instr['op'] == 'while':
+        return while_to_string(instr, indentLevel)
+    if instr['op'] == 'if':
+        return if_to_string(instr, indentLevel)
+    if instr['op'] == 'block':
+        return block_to_string(instr, indentLevel)
     if instr['op'] == 'const':
         tyann = ': {}'.format(type_to_str(instr['type'])) \
             if 'type' in instr else ''
-        return '{}{} = const {}'.format(
+        return '{}{}{} = const {};'.format(
+            indent,
             instr['dest'],
             tyann,
             value_to_str(instr['type'], instr['value']),
@@ -339,22 +392,18 @@ def instr_to_string(instr):
         if 'dest' in instr:
             tyann = ': {}'.format(type_to_str(instr['type'])) \
                 if 'type' in instr else ''
-            return '{}{} = {}'.format(
+            return '{}{}{} = {};'.format(
+                indent,
                 instr['dest'],
                 tyann,
                 rhs,
             )
         else:
-            return rhs
+            return '{}{};'.format(indent, rhs)
 
 
 def print_instr(instr):
-    print('  {};'.format(instr_to_string(instr)))
-
-
-def print_label(label):
-    print('.{}:'.format(label['label']))
-
+    print('{}'.format(instr_to_string(instr)))
 
 def args_to_string(args):
     if args:
@@ -365,7 +414,6 @@ def args_to_string(args):
     else:
         return ''
 
-
 def print_func(func):
     typ = func.get('type', 'void')
     print('@{}{}{} {{'.format(
@@ -373,11 +421,8 @@ def print_func(func):
         args_to_string(func.get('args', [])),
         ': {}'.format(type_to_str(typ)) if typ != 'void' else '',
     ))
-    for instr_or_label in func['instrs']:
-        if 'label' in instr_or_label:
-            print_label(instr_or_label)
-        else:
-            print_instr(instr_or_label)
+    for instr in func['instrs']:
+        print_instr(instr)
     print('}')
 
 
@@ -393,7 +438,7 @@ def briloop2json():
 
 
 def briloop2txt():
-    print("come back soon!")
+    print_prog(json.load(sys.stdin))
 
 if __name__ == "__main__":
-    briloop2json()
+    briloop2txt()
