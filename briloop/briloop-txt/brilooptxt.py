@@ -321,7 +321,7 @@ def formatted_children(instrs, indentLevel):
 
 def while_to_string(instr, indentLevel):
     indent = '  ' * indentLevel
-    return '{}while ({}) {{\n{}\n{}}}'.format(
+    return '{}while {} {{\n{}\n{}}}'.format(
         indent,
         instr['args'][0],
         formatted_children(instr['children'][0], indentLevel + 1),
