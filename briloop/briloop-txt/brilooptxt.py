@@ -30,12 +30,9 @@ while_: WHILE IDENT "{" stmt* "}"
 if_: IF IDENT then_ [else_]
 then_: THEN "{" stmt* "}"
 else_: ELSE "{" stmt* "}"
-?instr: break_ | const | vop | eop | label
+?instr: flow | const | vop | eop | label
 
-break_: BREAK lit?;
-const.4: IDENT [tyann] "=" "const" lit ";"
-vop.3: IDENT [tyann] "=" op ";"
-eop.2: op ";"
+flow: FLOW lit?;
 label.1: LABEL ":"
 
 op: IDENT (FUNC | LABEL | IDENT)*
@@ -62,7 +59,7 @@ IF: "if"
 THEN: "then"
 ELSE: "else"
 WHILE: "while"
-BREAK: "break"
+FLOW: "break" | "continue"
 
 %import common.SIGNED_INT
 %import common.SIGNED_FLOAT
@@ -195,10 +192,12 @@ class JSONTransformer(lark.Transformer):
     def arg_list(self, items):
         return items
 
-    def break_(self, items):
-        val = items
+    def flow(self, items):
+        print("flow", items)
+        name = items.pop(0)
+        val = items.pop(0)
         out = {
-            'op': 'break',
+            'op': name,
             'value': val,
         }
         return out
@@ -380,6 +379,11 @@ def instr_to_string(instr, indentLevel = 1):
         return block_to_string(instr, indentLevel)
     if instr['op'] == 'break':
         return '{}break {};'.format(
+            indent,
+            instr['value'] if instr['value'] else 0,
+        )
+    if instr['op'] == 'continue':
+        return '{}continue {};'.format(
             indent,
             instr['value'] if instr['value'] else 0,
         )
