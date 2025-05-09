@@ -133,7 +133,7 @@ const argCounts: { [key in bril.OpCode]: number | null } = {
   // jmp: 0, REMOVED
   while: 1, // ADDED
   if: 1, // ADDED
-  break: 0, // ADDED
+  break: 1, // ADDED
   continue: 0, // ADDED
   ret: null, // (Should be 0 or 1.)
   nop: 0,
@@ -338,10 +338,10 @@ type Action =
   | { action: "speculate" }
   | { action: "commit" }
   | { action: "abort"; label: bril.Ident }
-  | { action: "break" } // Break out of innermost loop.
+  | { action: "break"; level: number } // Break out of n loops.
   | { action: "continue" }; // Continue to next iteration of innermost loop.
 const NEXT: Action = { action: "next" };
-const BREAK: Action = { action: "break" };
+const BREAK: Action = { action: "break", level: 1 };
 const CONTINUE: Action = { action: "continue" };
 
 /**
@@ -855,9 +855,7 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
     }
 
     case "while": {
-      var i = 0;
       while (true) {
-        i = i + 1;
         const cond = getBool(instr, state.env, 0);
         if (!cond) {
           return NEXT;
@@ -867,7 +865,11 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
         const result = evalBlock(body, state);
 
         if (result.action === "break") {
-          return NEXT;
+          if (result.level > 1) {
+            return { action: "break", level: result.level - 1 };
+          } else {
+            return NEXT;
+          }
         } else if (result.action === "continue") {
           continue;
         } else if (
@@ -882,7 +884,16 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
     }
 
     case "break": {
-      return BREAK;
+      let level = 1;
+
+      if (instr.args && instr.args.length > 0) {
+        const levelVal = get(state.env, instr.args[0]);
+        if (typeof levelVal === "bigint") {
+          level = Number(levelVal);
+        }
+      }
+
+      return { action: "break", level: level };
     }
 
     case "continue": {
@@ -919,7 +930,6 @@ function evalBlock(instrs: bril.Instruction[], state: State): Action {
       }
     }
   }
-
   return NEXT;
 }
 
