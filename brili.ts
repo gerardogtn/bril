@@ -132,8 +132,9 @@ const argCounts: { [key in bril.OpCode]: number | null } = {
   // br: 1, REMOVED
   // jmp: 0, REMOVED
   while: 1, // ADDED
+  block: 0, // ADDED
   if: 1, // ADDED
-  break: 1, // ADDED
+  break: 0, // ADDED
   continue: 0, // ADDED
   ret: null, // (Should be 0 or 1.)
   nop: 0,
@@ -854,6 +855,20 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
       return NEXT;
     }
 
+    case "block": {
+        const body = instr.children?.[0] || [];
+        const result = evalBlock(body, state);
+        if (result.action === "break") {
+            if (result.level > 0) {
+                return { action: "break", level: result.level - 1 };
+            } else {
+                return NEXT;
+            }
+        } else {
+            return result;
+        }
+    }
+
     case "while": {
       while (true) {
         const cond = getBool(instr, state.env, 0);
@@ -865,13 +880,17 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
         const result = evalBlock(body, state);
 
         if (result.action === "break") {
-          if (result.level > 1) {
+          if (result.level > 0) {
             return { action: "break", level: result.level - 1 };
           } else {
             return NEXT;
           }
         } else if (result.action === "continue") {
-          continue;
+          if (result.level > 0) {
+            return { action: "continue", level: result.level - 1 };
+          } else {
+            continue;
+          }
         } else if (
           result.action === "end" ||
           result.action === "speculate" ||
@@ -884,15 +903,7 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
     }
 
     case "break": {
-      let level = 1;
-
-      if (instr.args && instr.args.length > 0) {
-        const levelVal = get(state.env, instr.args[0]);
-        if (typeof levelVal === "bigint") {
-          level = Number(levelVal);
-        }
-      }
-
+      let level = instr.value;
       return { action: "break", level: level };
     }
 
