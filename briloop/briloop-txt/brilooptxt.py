@@ -23,16 +23,18 @@ struct: STRUCT IDENT "=" "{" mbr* "}"
 mbr: IDENT ":" type ";"
 
 func: FUNC ["(" arg_list? ")"] [tyann] "{" stmt* "}"
-stmt: instr | while_ | if_
+stmt: continue_ | instr | while_ | if_ | block_ | break_
 arg_list: | arg ("," arg)*
 arg: IDENT ":" type
 while_: WHILE IDENT "{" stmt* "}"
 if_: IF IDENT then_ [else_]
 then_: THEN "{" stmt* "}"
 else_: ELSE "{" stmt* "}"
-?instr: break_ | const | vop | eop | label
+block_: BLOCK "{" stmt* "}"
+break_: BREAK lit ";"
+continue_: CONTINUE lit ";"
+?instr: const | vop | eop | label
 
-break_: BREAK lit?;
 const.4: IDENT [tyann] "=" "const" lit ";"
 vop.3: IDENT [tyann] "=" op ";"
 eop.2: op ";"
@@ -63,6 +65,8 @@ THEN: "then"
 ELSE: "else"
 WHILE: "while"
 BREAK: "break"
+CONTINUE: "continue"
+BLOCK: "block"
 
 %import common.SIGNED_INT
 %import common.SIGNED_FLOAT
@@ -136,6 +140,33 @@ class JSONTransformer(lark.Transformer):
             'args': [name],
             'children': [body],
         }
+
+    def block_(self, items):
+        op = str(items[0])
+        name = str(items[1])
+        body = items[2:]
+        return {
+            'op': op,
+            'args': [name],
+            'children': [body],
+        }
+
+    def break_(self, items):
+        op = str(items[0])
+        val = str(items[1])
+        return {
+            'op': op,
+            'value': val,
+        }
+
+    def continue_(self, items):
+        op = str(items[0])
+        val = str(items[1])
+        return {
+            'op': op,
+            'value': val,
+        }
+
 
     def if_(self, items):
         op = str(items[0])
