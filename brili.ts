@@ -340,10 +340,10 @@ type Action =
   | { action: "commit" }
   | { action: "abort"; label: bril.Ident }
   | { action: "break"; level: number } // Break out of n loops.
-  | { action: "continue" }; // Continue to next iteration of innermost loop.
+  | { action: "continue"; level: number }; // Continue to next iteration of innermost loop.
 const NEXT: Action = { action: "next" };
-const BREAK: Action = { action: "break", level: 1 };
-const CONTINUE: Action = { action: "continue" };
+const BREAK: Action = { action: "break", level: 0 };
+const CONTINUE: Action = { action: "continue", level: 0 };
 
 /**
  * The interpreter state that's threaded through recursive calls.
@@ -908,7 +908,8 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
     }
 
     case "continue": {
-      return CONTINUE;
+      let level = instr.value;
+      return { action: "continue", level: level };
     }
   }
   unreachable(instr);
