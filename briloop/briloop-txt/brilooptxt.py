@@ -352,11 +352,11 @@ def if_to_string(instr, indentLevel):
         indent
     )
 
-def block_to_string(instr):
+def block_to_string(instr, indentLevel):
     indent = '  ' * indentLevel
     return '{}block {{\n{}\n{}}}'.format(
         indent,
-        formatted_children(instr['children'][0]),
+        formatted_children(instr['children'][0], indentLevel + 1),
         indent
     )
 
@@ -440,5 +440,3 @@ def briloop2json():
 def briloop2txt():
     print_prog(json.load(sys.stdin))
 
-if __name__ == "__main__":
-    briloop2txt()
