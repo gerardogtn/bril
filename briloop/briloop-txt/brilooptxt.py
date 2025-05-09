@@ -143,11 +143,9 @@ class JSONTransformer(lark.Transformer):
 
     def block_(self, items):
         op = str(items[0])
-        name = str(items[1])
-        body = items[2:]
+        body = items[1:]
         return {
             'op': op,
-            'args': [name],
             'children': [body],
         }
 
