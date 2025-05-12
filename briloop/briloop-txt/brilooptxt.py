@@ -151,7 +151,7 @@ class JSONTransformer(lark.Transformer):
 
     def break_(self, items):
         op = str(items[0])
-        val = str(items[1])
+        val = int(str(items[1]))
         return {
             'op': op,
             'value': val,
@@ -223,14 +223,6 @@ class JSONTransformer(lark.Transformer):
 
     def arg_list(self, items):
         return items
-
-    def break_(self, items):
-        val = items
-        out = {
-            'op': 'break',
-            'value': val,
-        }
-        return out
 
     def const(self, items):
         dest, type, val = items
