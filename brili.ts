@@ -864,6 +864,12 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
             } else {
                 return NEXT;
             }
+        } else if (result.action === "continue") {
+            if (result.level > 0) {
+                return { action: "continue", level: result.level - 1};
+            } else {
+                return NEXT;
+            }
         } else {
             return result;
         }
@@ -878,7 +884,6 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
 
         const body = instr.children?.[0] || [];
         const result = evalBlock(body, state);
-
         if (result.action === "break") {
           if (result.level > 0) {
             return { action: "break", level: result.level - 1 };
