@@ -159,7 +159,7 @@ class JSONTransformer(lark.Transformer):
 
     def continue_(self, items):
         op = str(items[0])
-        val = str(items[1])
+        val = int(str(items[1]))
         return {
             'op': op,
             'value': val,
