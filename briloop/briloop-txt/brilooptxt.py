@@ -404,6 +404,11 @@ def instr_to_string(instr, indentLevel = 1):
             indent,
             instr['value'] if instr['value'] else 0,
         )
+    if instr['op'] == 'continue':
+        return '{}continue {};'.format(
+            indent,
+            instr['value'] if instr['value'] else 0,
+        )
     if instr['op'] == 'const':
         tyann = ': {}'.format(type_to_str(instr['type'])) \
             if 'type' in instr else ''
