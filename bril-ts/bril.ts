@@ -35,6 +35,7 @@ interface Op {
   funcs?: Ident[];
   labels?: Ident[];
   pos?: Position;
+  children?: Instruction[][];
 }
 
 // deno-fmt-ignore
@@ -42,9 +43,19 @@ interface Op {
  * An instruction that does not produce any result.
  */
 export interface EffectOperation extends Op {
-  op: "br" | "jmp" | "print" | "ret" | "call" |
-    "store" | "free" |
-    "speculate" | "guard" | "commit";
+  op: // | "br"
+  // | "jmp"
+  | "print"
+    | "ret"
+    | "call"
+    | "store"
+    | "free"
+    | "speculate"
+    | "guard"
+    | "commit"
+    | "while"
+    | "break"
+    | "continue";
 }
 
 // deno-fmt-ignore
@@ -53,16 +64,45 @@ export interface EffectOperation extends Op {
  * destination variable.
  */
 export interface ValueOperation extends Op {
-  op: "add" | "mul" | "sub" | "div" |
-      "id" | "nop" |
-      "eq" | "lt" | "gt" | "ge" | "le" | "not" | "and" | "or" |
-      "call" |
-      "load" | "ptradd" | "alloc" |
-      "fadd" | "fmul" | "fsub" | "fdiv" |
-      "feq" | "flt" | "fle" | "fgt" | "fge" |
-      "ceq" | "clt" | "cle" | "cgt" | "cge" |
-      "char2int" | "int2char" |
-      "get" | "set" | "undef";
+  op:
+    | "add"
+    | "mul"
+    | "sub"
+    | "div"
+    | "id"
+    | "nop"
+    | "eq"
+    | "lt"
+    | "gt"
+    | "ge"
+    | "le"
+    | "not"
+    | "and"
+    | "or"
+    | "call"
+    | "load"
+    | "ptradd"
+    | "alloc"
+    | "fadd"
+    | "fmul"
+    | "fsub"
+    | "fdiv"
+    | "feq"
+    | "flt"
+    | "fle"
+    | "fgt"
+    | "fge"
+    | "ceq"
+    | "clt"
+    | "cle"
+    | "cgt"
+    | "cge"
+    | "char2int"
+    | "int2char"
+    | "get"
+    | "set"
+    | "undef"
+    | "if";
   dest: Ident;
   type: Type;
 }
@@ -117,10 +157,10 @@ export type OpCode = ValueOpCode | EffectOpCode;
 /**
  * Jump labels just mark a position with a name.
  */
-export interface Label {
-  label: Ident;
-  pos?: Position;
-}
+// export interface Label {
+//   label: Ident;
+//   pos?: Position;
+// }
 
 /*
  * An argument has a name and a type.
@@ -136,7 +176,7 @@ export interface Argument {
 export interface Function {
   name: Ident;
   args?: Argument[];
-  instrs: (Instruction | Label)[];
+  instrs: Instruction[];
   type?: Type;
   pos?: Position;
 }

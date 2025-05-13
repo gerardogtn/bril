@@ -77,7 +77,7 @@ export class Heap<X> {
       this.storage.delete(key.base);
     } else {
       throw error(
-        `Tried to free illegal memory location base: ${key.base}, offset: ${key.offset}. Offset must be 0.`,
+        `Tried to free illegal memory location base: ${key.base}, offset: ${key.offset}. Offset must be 0.`
       );
     }
   }
@@ -88,7 +88,7 @@ export class Heap<X> {
       data[key.offset] = val;
     } else {
       throw error(
-        `Uninitialized heap location ${key.base} and/or illegal offset ${key.offset}`,
+        `Uninitialized heap location ${key.base} and/or illegal offset ${key.offset}`
       );
     }
   }
@@ -99,7 +99,7 @@ export class Heap<X> {
       return data[key.offset];
     } else {
       throw error(
-        `Uninitialized heap location ${key.base} and/or illegal offset ${key.offset}`,
+        `Uninitialized heap location ${key.base} and/or illegal offset ${key.offset}`
       );
     }
   }
@@ -129,8 +129,13 @@ const argCounts: { [key in bril.OpCode]: number | null } = {
   fge: 2,
   feq: 2,
   print: null, // Any number of arguments.
-  br: 1,
-  jmp: 0,
+  // br: 1, REMOVED
+  // jmp: 0, REMOVED
+  while: 1, // ADDED
+  block: 0, // ADDED
+  if: 1, // ADDED
+  break: 0, // ADDED
+  continue: 0, // ADDED
   ret: null, // (Should be 0 or 1.)
   nop: 0,
   call: null,
@@ -190,7 +195,12 @@ function typeCheck(val: Value, typ: bril.Type): boolean {
 function typeCmp(lhs: bril.Type, rhs: bril.Type): boolean {
   if (lhs === "any" || rhs === "any") {
     return true;
-  } else if (lhs === "int" || lhs == "bool" || lhs == "float" || lhs == "char") {
+  } else if (
+    lhs === "int" ||
+    lhs == "bool" ||
+    lhs == "float" ||
+    lhs == "char"
+  ) {
     return lhs == rhs;
   } else {
     if (typeof rhs === "object" && Object.hasOwn(rhs, "ptr")) {
@@ -226,7 +236,7 @@ function findFunc(func: bril.Ident, funcs: readonly bril.Function[]) {
 function alloc(
   ptrType: bril.ParamType,
   amt: number,
-  heap: Heap<Value>,
+  heap: Heap<Value>
 ): Pointer {
   if (typeof ptrType != "object") {
     throw error(`unspecified pointer type ${ptrType}`);
@@ -265,14 +275,12 @@ function getArgument(
   instr: bril.Operation,
   env: Env,
   index: number,
-  typ?: bril.Type,
+  typ?: bril.Type
 ) {
   const args = instr.args || [];
   if (args.length <= index) {
     throw error(
-      `${instr.op} expected at least ${
-        index + 1
-      } arguments; got ${args.length}`,
+      `${instr.op} expected at least ${index + 1} arguments; got ${args.length}`
     );
   }
   const val = get(env, args[index]);
@@ -314,7 +322,7 @@ function getFunc(instr: bril.Operation, index: number): bril.Ident {
   }
   if (instr.funcs.length <= index) {
     throw error(
-      `expecting ${index + 1} functions; found ${instr.funcs.length}`,
+      `expecting ${index + 1} functions; found ${instr.funcs.length}`
     );
   }
   return instr.funcs[index];
@@ -325,13 +333,17 @@ function getFunc(instr: bril.Operation, index: number): bril.Ident {
  * communicates control-flow actions back to the top-level interpreter loop.
  */
 type Action =
-  | { "action": "next" } // Normal execution: just proceed to next instruction.
-  | { "action": "jump"; "label": bril.Ident }
-  | { "action": "end"; "ret": Value | null }
-  | { "action": "speculate" }
-  | { "action": "commit" }
-  | { "action": "abort"; "label": bril.Ident };
-const NEXT: Action = { "action": "next" };
+  | { action: "next" } // Normal execution: just proceed to next instruction.
+  // | { action: "jump"; label: bril.Ident }
+  | { action: "end"; ret: Value | null }
+  | { action: "speculate" }
+  | { action: "commit" }
+  | { action: "abort"; label: bril.Ident }
+  | { action: "break"; level: number } // Break out of n loops.
+  | { action: "continue"; level: number }; // Continue to next iteration of innermost loop.
+const NEXT: Action = { action: "next" };
+const BREAK: Action = { action: "break", level: 0 };
+const CONTINUE: Action = { action: "continue", level: 0 };
 
 /**
  * The interpreter state that's threaded through recursive calls.
@@ -369,7 +381,7 @@ function evalCall(instr: bril.Operation, state: State): Action {
   const args = instr.args || [];
   if (params.length !== args.length) {
     throw error(
-      `function expected ${params.length} arguments, got ${args.length}`,
+      `function expected ${params.length} arguments, got ${args.length}`
     );
   }
 
@@ -399,17 +411,19 @@ function evalCall(instr: bril.Operation, state: State): Action {
   state.icount = newState.icount;
 
   // Dynamically check the function's return value and type.
-  if (!("dest" in instr)) { // `instr` is an `EffectOperation`.
+  if (!("dest" in instr)) {
+    // `instr` is an `EffectOperation`.
     // Expected void function
     if (retVal !== null) {
       throw error(`unexpected value returned without destination`);
     }
     if (func.type !== undefined) {
       throw error(
-        `non-void function (type: ${func.type}) doesn't return anything`,
+        `non-void function (type: ${func.type}) doesn't return anything`
       );
     }
-  } else { // `instr` is a `ValueOperation`.
+  } else {
+    // `instr` is a `ValueOperation`.
     // Expected non-void function
     if (instr.type === undefined) {
       throw error(`function call must include a type if it has a destination`);
@@ -419,12 +433,12 @@ function evalCall(instr: bril.Operation, state: State): Action {
     }
     if (retVal === null) {
       throw error(
-        `non-void function (type: ${func.type}) doesn't return anything`,
+        `non-void function (type: ${func.type}) doesn't return anything`
       );
     }
     if (!typeCheck(retVal, instr.type)) {
       throw error(
-        `type of value returned by function does not match destination type`,
+        `type of value returned by function does not match destination type`
       );
     }
     if (func.type === undefined) {
@@ -432,7 +446,7 @@ function evalCall(instr: bril.Operation, state: State): Action {
     }
     if (!typeCmp(instr.type, func.type)) {
       throw error(
-        `type of value returned by function does not match declaration`,
+        `type of value returned by function does not match declaration`
       );
     }
     state.env.set(instr.dest, retVal);
@@ -651,26 +665,26 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
       return NEXT;
     }
 
-    case "jmp": {
-      return { "action": "jump", "label": getLabel(instr, 0) };
-    }
+    // case "jmp": {
+    //   return { "action": "jump", "label": getLabel(instr, 0) };
+    // }
 
-    case "br": {
-      const cond = getBool(instr, state.env, 0);
-      if (cond) {
-        return { "action": "jump", "label": getLabel(instr, 0) };
-      } else {
-        return { "action": "jump", "label": getLabel(instr, 1) };
-      }
-    }
+    // case "br": {
+    //   const cond = getBool(instr, state.env, 0);
+    //   if (cond) {
+    //     return { "action": "jump", "label": getLabel(instr, 0) };
+    //   } else {
+    //     return { "action": "jump", "label": getLabel(instr, 1) };
+    //   }
+    // }
 
     case "ret": {
       const args = instr.args || [];
       if (args.length == 0) {
-        return { "action": "end", "ret": null };
+        return { action: "end", ret: null };
       } else if (args.length == 1) {
         const val = get(state.env, args[0]);
-        return { "action": "end", "ret": val };
+        return { action: "end", ret: val };
       } else {
         throw error(`ret takes 0 or 1 argument(s); got ${args.length}`);
       }
@@ -705,7 +719,7 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
       const target = getPtr(instr, state.env, 0);
       state.heap.write(
         target.loc,
-        getArgument(instr, state.env, 1, target.type),
+        getArgument(instr, state.env, 1, target.type)
       );
       return NEXT;
     }
@@ -761,7 +775,7 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
 
     // Begin speculation.
     case "speculate": {
-      return { "action": "speculate" };
+      return { action: "speculate" };
     }
 
     // Abort speculation if the condition is false.
@@ -769,13 +783,13 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
       if (getBool(instr, state.env, 0)) {
         return NEXT;
       } else {
-        return { "action": "abort", "label": getLabel(instr, 0) };
+        return { action: "abort", label: getLabel(instr, 0) };
       }
     }
 
     // Resolve speculation, making speculative state real.
     case "commit": {
-      return { "action": "commit" };
+      return { action: "commit" };
     }
 
     case "ceq": {
@@ -824,9 +838,116 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
       state.env.set(instr.dest, val);
       return NEXT;
     }
+
+    case "if": {
+      const cond = getBool(instr, state.env, 0);
+      if (cond) {
+        const trueBody = instr.children?.[0];
+        if (trueBody) {
+          return evalBlock(trueBody, state);
+        }
+      } else {
+        const falseBody = instr.children?.[1];
+        if (falseBody) {
+          return evalBlock(falseBody, state);
+        }
+      }
+      return NEXT;
+    }
+
+    case "block": {
+        const body = instr.children?.[0] || [];
+        const result = evalBlock(body, state);
+        if (result.action === "break") {
+            if (result.level > 0) {
+                return { action: "break", level: result.level - 1 };
+            } else {
+                return NEXT;
+            }
+        } else if (result.action === "continue") {
+            if (result.level > 0) {
+                return { action: "continue", level: result.level - 1};
+            } else {
+                return NEXT;
+            }
+        } else {
+            return result;
+        }
+    }
+
+    case "while": {
+      while (true) {
+        const cond = getBool(instr, state.env, 0);
+        if (!cond) {
+          return NEXT;
+        }
+
+        const body = instr.children?.[0] || [];
+        const result = evalBlock(body, state);
+        if (result.action === "break") {
+          if (result.level > 0) {
+            return { action: "break", level: result.level - 1 };
+          } else {
+            return NEXT;
+          }
+        } else if (result.action === "continue") {
+          if (result.level > 0) {
+            return { action: "continue", level: result.level - 1 };
+          } else {
+            continue;
+          }
+        } else if (
+          result.action === "end" ||
+          result.action === "speculate" ||
+          result.action === "commit" ||
+          result.action === "abort"
+        ) {
+          return result;
+        }
+      }
+    }
+
+    case "break": {
+      let level = instr.value;
+      return { action: "break", level: level };
+    }
+
+    case "continue": {
+      let level = instr.value;
+      return { action: "continue", level: level };
+    }
   }
   unreachable(instr);
   throw error(`unhandled opcode ${instr.op}`);
+}
+
+/**
+ * Evaluate a block of instructions and return the resulting action.
+ * This is a new function to handle blocks of instructions in the children array.
+ */
+function evalBlock(instrs: bril.Instruction[], state: State): Action {
+  for (let i = 0; i < instrs.length; ++i) {
+    const instr = instrs[i];
+    if ("op" in instr) {
+      const action = evalInstr(instr, state);
+
+      switch (action.action) {
+        case "next":
+          break;
+        case "break":
+        case "continue":
+        case "end":
+        case "speculate":
+        case "commit":
+        case "abort":
+          return action;
+        default:
+          unreachable(action);
+          throw error(`unhandled action ${action.action}`);
+      }
+    }
+  }
+  return NEXT;
 }
 
 function evalFunc(func: bril.Function, state: State): Value | null {
@@ -870,8 +991,21 @@ function evalFunc(func: bril.Function, state: State): Value | null {
           });
           break;
         }
+        case "break": {
+          // Break out of the innermost loop.
+          if (state.specparent) {
+            throw error(`break in speculative state`);
+          }
+          break;
+        }
+        case "continue": {
+          // Continue to the next iteration of the innermost loop.
+          if (state.specparent) {
+            throw error(`continue in speculative state`);
+          }
+        }
         case "next":
-        case "jump":
+          // case "jump":
           break;
         default:
           unreachable(action);
@@ -939,7 +1073,7 @@ function parseMainArguments(expected: bril.Argument[], args: string[]): Env {
 
   if (args.length !== expected.length) {
     throw error(
-      `mismatched main argument arity: expected ${expected.length}; got ${args.length}`,
+      `mismatched main argument arity: expected ${expected.length}; got ${args.length}`
     );
   }
 
@@ -1005,7 +1139,7 @@ function evalProg(prog: bril.Program) {
 
   if (!heap.isEmpty()) {
     throw error(
-      `Some memory locations have not been freed by end of execution.`,
+      `Some memory locations have not been freed by end of execution.`
     );
   }
 
