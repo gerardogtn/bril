@@ -129,8 +129,8 @@ const argCounts: { [key in bril.OpCode]: number | null } = {
   fge: 2,
   feq: 2,
   print: null, // Any number of arguments.
-  // br: 1, REMOVED
-  // jmp: 0, REMOVED
+  br: 1,
+  jmp: 0,
   while: 1, // ADDED
   block: 0, // ADDED
   if: 1, // ADDED
@@ -334,7 +334,7 @@ function getFunc(instr: bril.Operation, index: number): bril.Ident {
  */
 type Action =
   | { action: "next" } // Normal execution: just proceed to next instruction.
-  // | { action: "jump"; label: bril.Ident }
+  | { action: "jump"; label: bril.Ident }
   | { action: "end"; ret: Value | null }
   | { action: "speculate" }
   | { action: "commit" }
@@ -665,18 +665,18 @@ function evalInstr(instr: bril.Instruction, state: State): Action {
       return NEXT;
     }
 
-    // case "jmp": {
-    //   return { "action": "jump", "label": getLabel(instr, 0) };
-    // }
+     case "jmp": {
+       return { "action": "jump", "label": getLabel(instr, 0) };
+     }
 
-    // case "br": {
-    //   const cond = getBool(instr, state.env, 0);
-    //   if (cond) {
-    //     return { "action": "jump", "label": getLabel(instr, 0) };
-    //   } else {
-    //     return { "action": "jump", "label": getLabel(instr, 1) };
-    //   }
-    // }
+     case "br": {
+       const cond = getBool(instr, state.env, 0);
+       if (cond) {
+         return { "action": "jump", "label": getLabel(instr, 0) };
+       } else {
+         return { "action": "jump", "label": getLabel(instr, 1) };
+       }
+     }
 
     case "ret": {
       const args = instr.args || [];
@@ -1005,7 +1005,7 @@ function evalFunc(func: bril.Function, state: State): Value | null {
           }
         }
         case "next":
-          // case "jump":
+        case "jump":
           break;
         default:
           unreachable(action);
